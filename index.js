@@ -39,35 +39,38 @@ async function run() {
     //   res.send(result);
     // });
 
-
     app.get("/stocks", async (req, res) => {
-        try {
-            let { page, limit } = req.query;
-            page = parseInt(page) || 1;
-            limit = parseInt(limit) || 20; 
-            const skip = (page - 1) * limit;
-            const result = await stockCollection.find()
-                .skip(skip)
-                .limit(limit)
-                .toArray();
-            const total = await stockCollection.countDocuments();
-            res.send({
-                total,
-                page,
-                limit,
-                totalPages: Math.ceil(total / limit),
-                data: result,
-            });
-        } catch (error) {
-            res.status(500).send({ error: "Internal Server Error" });
-        }
+      try {
+        let { page, limit } = req.query;
+        page = parseInt(page) || 1;
+        limit = parseInt(limit) || 20;
+        const skip = (page - 1) * limit;
+        const result = await stockCollection
+          .find()
+          .skip(skip)
+          .limit(limit)
+          .toArray();
+        const total = await stockCollection.countDocuments();
+        res.send({
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+          data: result,
+        });
+      } catch (error) {
+        res.status(500).send({ error: "Internal Server Error" });
+      }
     });
-    
 
-
+    app.post("/stock", async (req, res) => {
+      const data = req.body;
+      const result = await stockCollection.insertOne(data);
+      res.send(result);
+    });
 
     //DELETE
-    app.delete("/stock/:id", async (req, res) => {
+    app.delete("/stockData/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await stockCollection.deleteOne(query);
@@ -81,26 +84,26 @@ async function run() {
       res.send(result);
     });
 
-     //UPDATE
-     app.put("/stockData/:id", async (req, res) => {
-        const id = req.params.id;
-        const filter = { _id: new ObjectId(id) };
-        const options = { upsert: true };
-        const updateData = req.body;
-        const updated = {
-          $set: {
-            date: updateData.date,
-            trade_code: updateData.trade_code,
-            high: updateData.high,
-            low: updateData.low,
-            open: updateData.open,
-            close: updateData.close,
-            volume: updateData.volume,
-          },
-        };
-        const result = await stockCollection.updateOne(filter, updated, options);
-        res.send(result);
-      });
+    //UPDATE
+    app.put("/stockData/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updateData = req.body;
+      const updated = {
+        $set: {
+          date: updateData.date,
+          trade_code: updateData.trade_code,
+          high: updateData.high,
+          low: updateData.low,
+          open: updateData.open,
+          close: updateData.close,
+          volume: updateData.volume,
+        },
+      };
+      const result = await stockCollection.updateOne(filter, updated, options);
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
